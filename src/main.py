@@ -1,6 +1,5 @@
 import ctypes
 from time import sleep
-import time 
 
 # Load the Antimonic renderer DLL
 ar = ctypes.CDLL(r"C:\Users\Admin\OneDrive\Desktop\Trappist\Antimonic\antimonic.dll ")
