@@ -1,0 +1,88 @@
+# ==========================================================
+# Antimonic Renderer - Cross-Platform Build System
+# Windows (PowerShell/CMD), Linux, macOS
+# ==========================================================
+
+# Detect OS safely (PowerShell/CMD-compatible)
+ifeq ($(OS),Windows_NT)
+    PLATFORM = WINDOWS
+else
+    UNAME_S := $(shell uname -s 2>/dev/null)
+    ifeq ($(UNAME_S),Linux)
+        PLATFORM = LINUX
+    else ifeq ($(UNAME_S),Darwin)
+        PLATFORM = MAC
+    else
+        $(error Unsupported OS detected)
+    endif
+endif
+
+# Compilers
+CC  = gcc
+CXX = g++
+FC  = gfortran
+
+# ==========================================================
+# Platform-specific settings
+# ==========================================================
+ifeq ($(PLATFORM),WINDOWS)
+    TARGET = antimonic.dll
+    SHARED_FLAG = -shared
+    LDFLAGS = -lgdi32 -lgfortran
+    RM = del /Q 2> NUL || true
+endif
+
+ifeq ($(PLATFORM),LINUX)
+    TARGET = libantimonic.so
+    SHARED_FLAG = -shared -fPIC
+    LDFLAGS = -lgfortran -lm -ldl
+    RM = rm -f
+endif
+
+ifeq ($(PLATFORM),MAC)
+    TARGET = libantimonic.dylib
+    SHARED_FLAG = -shared -fPIC
+    LDFLAGS = -lgfortran -lm
+    RM = rm -f
+endif
+
+# ==========================================================
+# Source files
+# ==========================================================
+SRC_DIR = src
+C_SRC   = $(SRC_DIR)/main.c
+CPP_SRC = $(SRC_DIR)/main.cpp
+F90_SRC = $(SRC_DIR)/main.f90
+
+# Object files
+C_OBJ   = main_c.o
+CPP_OBJ = main_cpp.o
+F90_OBJ = main_f90.o
+
+# Compiler flags
+CFLAGS = -Wall -O2
+
+# ==========================================================
+# Default build rule
+# ==========================================================
+all: $(TARGET)
+
+$(TARGET): $(C_OBJ) $(CPP_OBJ) $(F90_OBJ)
+	$(CXX) $(SHARED_FLAG) -o $(TARGET) $(C_OBJ) $(CPP_OBJ) $(F90_OBJ) $(LDFLAGS)
+	$(info ===============================================)
+	$(info Build complete!)
+	$(info Output: $(TARGET))
+	$(info Platform detected: $(PLATFORM))
+	$(info ===============================================)
+
+# ==========================================================
+# Compile rules
+# ==========================================================
+$(C_OBJ): $(C_SRC) $(SRC_DIR)/anm.h
+	$(CC) -c $(C_SRC) -o $(C_OBJ) $(CFLAGS)
+
+$(CPP_OBJ): $(CPP_SRC) $(SRC_DIR)/anm.h
+	$(CXX) -c $(CPP_SRC) -o $(CPP_OBJ) $(CFLAGS)
+
+$(F90_OBJ): $(F90_SRC)
+	$(FC) -c $(F90_SRC) -o $(F90_OBJ)
